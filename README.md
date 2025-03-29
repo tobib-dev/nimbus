@@ -1,0 +1,1 @@
+Nimbus allows porting songs from users library between DSPs. Further information will be added to the README as development proceeds
