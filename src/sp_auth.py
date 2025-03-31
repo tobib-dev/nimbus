@@ -15,8 +15,8 @@ sp_oauth = SpotifyOAuth(
     redirect_uri=REDIRECT_URI, scope=SCOPE
 )
 
-def extract():
-    sp = spotipy.Spotify(auth_manager=sp_oauth)
+def extract(token):
+    sp = spotipy.Spotify(auth_manager=token)
     saved_albums = sp.current_user_saved_albums()
     saved_tracks = sp.current_user_saved_tracks()
     playlists = sp.current_user_playlists()

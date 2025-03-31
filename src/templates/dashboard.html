@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <h1 class="text-3xl font-bold text-center mb-6">Welcome to Your Spotify Dashboard</h1>
+
+            {% if playlists %}
+                <h2 class="text-2xl font-semibold mb-4">Your Playlists</h2>
+                <ul class="space-y-4">
+                    {% for playlist in playlists %}
+                        <li class="p-4 bg-gray-200 rounded-md shadow-md">
+                            <h3 class="text-xl font-semibold">{{ playlist.name }}</h3>
+                            <p class="text-gray-600">{{ playlist.description if playlist.description else 'No description' }}</p>
+                            <a href="{{ playlist.external_urls.spotify }}" target="_blank" class="text-blue-500 mt-2 inline-block">View on Spotify</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-lg text-center text-gray-500">You don't have any playlists yet!</p>
+            {% endif %}
+
+            <div class="mt-8 text-center">
+                <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
