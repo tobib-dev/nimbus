@@ -23,7 +23,9 @@ def extract(token):
     saved_tracks = sp.current_user_saved_tracks()
     playlists = sp.current_user_playlists()
     return {
-        "album": [item["album"]["name"] for item in saved_albums["items"]]
+        "albums": [item["album"]["name"] for item in saved_albums["items"]],
+        "tracks": [item["track"]["name"] for item in saved_tracks["items"]],
+        "playlists": [p["name"] for p in playlists["items"]]
     }
 
 def get_token_info(auth_code):

@@ -19,8 +19,8 @@ def callback_spotify():
     if code == "access_denied":
         abort(404)
     token_info = sp_auth.get_token_info(code)
-    sp_albums = sp_auth.extract(token_info['access_token'])
-    return render_template("dashboard.html", library=sp_albums)
+    sp_lib = sp_auth.extract(token_info['access_token'])
+    return render_template("sp_board.html", library=sp_lib)
 
 if __name__ == "__main__":
     app.run(debug=True)
