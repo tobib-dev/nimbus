@@ -11,12 +11,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             const developerToken = music.developerToken;
             const UserToken = music.musicUserToken;
             
-            const albums = await fetchAllLibraryItems(
-                'v1/me/library/albums',
+            const songs = await fetchAllLibraryItems(
+                'v1/me/library/songs',
                 developerToken,
                 UserToken
             );
-            console.log("Albums:", albums);
+            console.log("Songs:", songs);
+            songs.forEach(song => {
+                const songName = song.attributes.name;
+                const artistName = song.attributes.artistName;
+                console.log(`Song: ${songName} by ${artistName}`);
+            });
         }
     })
 });
