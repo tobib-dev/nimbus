@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nimbus</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,8 +14,9 @@
 
         <div class="button-group">
             <a href="/spotify-login" class="btn spotify">Login with Spotify</a>
-            <a href="/apple-login" class="btn apple">Login with Apple Music</a>
+            <button id="apple-login" class="btn apple">Login with Apple Music</a>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
