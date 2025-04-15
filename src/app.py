@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, request, abort, jsonify
+import requests
 import sp_auth
 
 app = Flask(__name__)
@@ -24,11 +25,36 @@ def callback_spotify():
 
 @app.route("/apple-token")
 def get_apple_token():
-    #token = os.getenv("APPLE_SECRET")
+    token = get_developer_token()
+
+    return jsonify({"token": token})
+
+@app.route("/playlist-tracks")
+def get_playlist_tracks():
+    playlist_id = request.args.get("playlistId")
+    offset = request.args.get("offset", 0)
+
+    developer_token = get_developer_token()
+    music_user_token = request.headers.get("Music-User-Token")
+
+    headers = {
+        "Authorization": f"Bearer {developer_token}",
+        "Music-User-Token": music_user_token
+    }
+
+    url = f"https://api.music.apple.com/v1/me/library/playlists/{playlist_id}/tracks?offset={offset}"
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return jsonify({"error": "Apple Music API request failed"}), response.status_code
+    
+    return jsonify(response.json())
+
+def get_developer_token():
     with open("apple_token.txt") as f:
         token = f.read().strip()
 
-    return jsonify({"token": token})
+    return token
 
 
 if __name__ == "__main__":

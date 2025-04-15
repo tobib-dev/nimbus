@@ -16,11 +16,31 @@ document.addEventListener("DOMContentLoaded", async () => {
                 developerToken,
                 UserToken
             );
-            console.log("Songs:", songs);
+            
             songs.forEach(song => {
                 const songName = song.attributes.name;
                 const artistName = song.attributes.artistName;
-                console.log(`Song: ${songName} by ${artistName}`);
+                //console.log(`Song: ${songName} by ${artistName}`);
+            });
+
+            const playlists = await fetchAllLibraryItems(
+                'v1/me/library/playlists?include=tracks',
+                developerToken,
+                UserToken
+            );
+            playlists.forEach(async playlist => {
+                const playlistName = playlist.attributes.name;
+                const playlistId = playlist.id;
+                let tracks = playlist.relationships?.tracks?.data || [];
+
+                if (tracks.length === 100) {
+                    tracks = await fetchAllPlaylistTracks(playlistId, UserToken);
+                }
+
+                console.log(`Playlist: ${playlistName}`);
+                tracks.forEach(track => {
+                    console.log(`- ${track.attributes?.name} by ${track.attributes?.artistName}`);
+                });
             });
         }
     })
@@ -73,4 +93,32 @@ async function fetchAllLibraryItems(endpoint, developerToken, musicUserToken) {
         url = data.next ? `https://api.music.apple.com${data.next}` : null;
     }
     return allItems;
+}
+
+async function fetchAllPlaylistTracks(playlistId, musicUserToken) {
+    let allTracks = [];
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+        const response = await fetch(`/playlist-tracks?playlistId=${playlistId}&offset=${offset}`, {
+            headers: {
+                "Music-User-Token": musicUserToken
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Apple Music API error: ${response.status}`);
+        } 
+
+        const data = await response.json();
+        allTracks.push(...data.data);
+        
+        if (data.next) {
+            offset += 100;
+        } else {
+            hasMore = false;
+        }
+    }
+    return allTracks
 }
