@@ -8,14 +8,41 @@
     <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">Nimbus</h1>
-        <p class="tagline">Move your music between streaming like a starfighter through hyperspace.</p>
-
-        <div class="button-group">
-            <a href="/spotify-login" class="btn spotify">Login with Spotify</a>
-            <button id="apple-login" class="btn apple">Login with Apple Music</a>
+    <div id="home-screen">
+        <div class="login-container">
+            <h1 class="title">Nimbus</h1>
+            <p class="tagline">Move your music between streaming like a starfighter through hyperspace.</p>
+    
+            <div class="button-group">
+                <a href="/spotify-login" class="btn spotify">Login with Spotify</a>
+                <button id="apple-login" class="btn apple">Login with Apple Music</a>
+            </div>
         </div>
+    </div>
+
+    <div class="library-container" id="apple-dashboard" style="display: none;">
+        <h1 class="title">Welcome to Your Apple Music Dashboard</h1>
+
+        <div class="transfer-options">
+            <h2>Select your transfers:</h2>
+            <form action="/am_transfer" method="POST">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="am_transfer" value="songs"> Songs
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="am_transfer" value="playlists"> Playlists
+                </label>
+
+                <button type="submit" class="submit-btn">Begin Transfer</button>
+            </form>
+        </div>
+
+        <h2>Library Songs</h2>
+        <ul id="songs-list"></ul>
+
+        <h2>Library Playlists</h2>
+        <div id="playlists-container"></div>
+        <button id="back-home">⟵ Back to Home</button>
     </div>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

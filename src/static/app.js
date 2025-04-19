@@ -1,48 +1,43 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const appleLoginBtn = document.getElementById("apple-login");
+    const dashboard = document.getElementById("apple-dashboard");
+    const homeScreen = document.getElementById("home-screen");
+    const backBtn = document.getElementById("back-home");
 
+    dashboard.style.display = "none";
     appleLoginBtn.addEventListener("click", async () => {
         console.log("Apple music button clicked");
 
-        const music = await getAuthorizedMusicKitInstance(); 
+        const music = await getAuthorizedMusicKitInstance();
+        if (!music) return;
         if (music) {
             console.log("MusicKit authorized!");
 
             const developerToken = music.developerToken;
-            const UserToken = music.musicUserToken;
+            const userToken = music.musicUserToken;
+
+            homeScreen.style.display = "none";
+            dashboard.style.display = "block";
             
             const songs = await fetchAllLibraryItems(
                 'v1/me/library/songs',
-                developerToken,
-                UserToken
+                userToken
             );
-            
-            songs.forEach(song => {
-                const songName = song.attributes.name;
-                const artistName = song.attributes.artistName;
-                //console.log(`Song: ${songName} by ${artistName}`);
-            });
+            console.log("Fetched songs:", songs);
+            displaySongs(songs);
 
             const playlists = await fetchAllLibraryItems(
-                'v1/me/library/playlists?include=tracks',
-                developerToken,
-                UserToken
+                'v1/me/library/playlists',
+                userToken
             );
-            playlists.forEach(async playlist => {
-                const playlistName = playlist.attributes.name;
-                const playlistId = playlist.id;
-                let tracks = playlist.relationships?.tracks?.data || [];
-
-                if (tracks.length === 100) {
-                    tracks = await fetchAllPlaylistTracks(playlistId, UserToken);
-                }
-
-                console.log(`Playlist: ${playlistName}`);
-                tracks.forEach(track => {
-                    console.log(`- ${track.attributes?.name} by ${track.attributes?.artistName}`);
-                });
-            });
+            console.log("Fetched playlists:", playlists);
+            await displayPlaylists(playlists, userToken)
         }
+    });
+
+    backBtn.addEventListener("click", () => {
+        dashboard.style.display = "none";
+        homeScreen.style.display = "block";
     })
 });
 
@@ -70,27 +65,30 @@ async function getAuthorizedMusicKitInstance() {
     }
 }
 
-async function fetchAllLibraryItems(endpoint, developerToken, musicUserToken) {
-    const baseUrl = `https://api.music.apple.com/${endpoint}`;
-    let url = baseUrl;
+async function fetchAllLibraryItems(endpoint, musicUserToken) {
     let allItems = [];
+    let offset = 0;
+    let hasMore = true;
 
-    while (url) {
-        const response = await fetch(url, {
+    while  (hasMore) {
+        const response = await fetch(`library-items?endpoint=${encodeURIComponent(endpoint)}&offset=${offset}`, {
             headers: {
-                Authorization: `Bearer ${developerToken}`,
                 'Music-User-Token': musicUserToken
             }
         });
 
         if (!response.ok) {
-            throw new Error(`Apple Music API error: ${response.status}`);
+            throw new Error(`Application Backend error: ${response.status}`);
         }
 
         const data = await response.json();
         allItems = allItems.concat(data.data || []);
 
-        url = data.next ? `https://api.music.apple.com${data.next}` : null;
+        if (data.next) {
+            offset += 100;
+        } else {
+            hasMore = false;
+        }
     }
     return allItems;
 }
@@ -121,4 +119,46 @@ async function fetchAllPlaylistTracks(playlistId, musicUserToken) {
         }
     }
     return allTracks
+}
+
+function displaySongs(songs) {
+    const songsList = document.getElementById("songs-list");
+    songsList.innerHTML = "";
+    songs.forEach(song=> {
+        const li = document.createElement("li");
+        li.textContent = `${song.attributes.name} by ${song.attributes.artistName}`;
+        songsList.appendChild(li);
+    });
+}
+
+async function displayPlaylists(playlists, UserToken) {
+    const playlistContainer = document.getElementById("playlists-container");
+    playlistContainer.innerHTML = "";
+
+    for (const playlist of playlists) {
+        const playlistName = playlist.attributes.name;
+        const playlistId = playlist.id;
+        let tracks = playlist.relationships?.tracks?.data || [];
+
+       if (playlist.relationships?.tracks?.next) {
+           tracks = await fetchAllPlaylistTracks(playlistId, UserToken);
+       }
+
+       const div = document.createElement("div");
+       div.classList.add("playlist");
+
+       const title = document.createElement("h3");
+       title.textContent = playlistName;
+       div.appendChild(title);
+
+       const ul = document.createElement("ul");
+       tracks.forEach(track => {
+        const li = document.createElement("li");
+        li.textContent = `${track.attributes?.name} by ${track.attributes?.artistName}`;
+        ul.appendChild(li);
+       });
+
+       div.appendChild(ul);
+       playlistContainer.appendChild(div);
+    }
 }

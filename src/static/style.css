@@ -30,7 +30,19 @@ body::before {
     }
 }
 
-.container {
+.login-container {
+    text-align: center;
+    background-color: rgba(15, 17, 19, 0.85);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #00b4d8;;
+    max-width: 800px;
+    margin: 0 auto;
+    z-index: 1;
+    position: relative;
+}
+
+.library-container {
     text-align: center;
     background-color: rgba(15, 17, 19, 0.85);
     padding: 40px;
@@ -155,8 +167,8 @@ ul.library-list li {
     text-align: left;
 }
 
-/* Back link styling */
-.back-link {
+/* Back button styling */
+#back-home {
     display: inline-block;
     margin-top: 25px;
     color: #a0aab5;
@@ -165,7 +177,7 @@ ul.library-list li {
     transition: color 0.3s;
 }
 
-.back-link:hover {
+#back-home:hover {
     color: #00b4d8;
     text-decoration: underline;
 }

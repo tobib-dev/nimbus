@@ -50,12 +50,27 @@ def get_playlist_tracks():
     
     return jsonify(response.json())
 
+@app.route('/library-items')
+def get_library_items():
+    endpoint = request.args.get('endpoint')
+    offset = request.args.get('offset', 0)
+    user_token = request.headers.get('Music-User-Token')
+    developer_token = get_developer_token()
+
+    headers = {
+        "Authorization": f"Bearer {developer_token}",
+        "Music-User-Token": user_token
+    }
+
+    url = f"https://api.music.apple.com/{endpoint}&offset={offset}"
+    response = requests.get(url, headers=headers)
+    return jsonify(response.json())
+
 def get_developer_token():
     with open("apple_token.txt") as f:
         token = f.read().strip()
 
     return token
-
 
 if __name__ == "__main__":
     app.run(debug=True)
