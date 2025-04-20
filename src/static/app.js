@@ -170,3 +170,34 @@ async function displayPlaylists(playlists, UserToken) {
        playlistContainer.appendChild(div);
     }
 }
+
+async function submitSelected() {
+    const checkboxes = document.querySelectorAll('input[name="sp_transfer"]:checked');
+    const selectedItems = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedItems.length === 0) {
+        alert("Please select at least one item to transfer.");
+        return;
+    }
+
+    fetch("/sp_transfer", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({selected: selectedItems})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(`Transfer started for: ${data.selected.join(", ")}`);
+    })
+    .catch(error => {
+        console.error("Transfer error:", error);
+        alert("Something went wrong during the transfer.");
+    });
+}
