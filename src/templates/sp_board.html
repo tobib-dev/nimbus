@@ -14,17 +14,15 @@
 
         <div class="transfer-options">
             <h2>Select your transfers:</h2>
-            <form action="/sp_transfer" method="POST">
+            <form id="sp_form" method="POST">
                 <label class="checkbox-label">
                     <input type="checkbox" name="sp_transfer" value="songs"> Songs
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" name="sp_transfer" value="albums"> Albums
-                </label><label class="checkbox-label">
                     <input type="checkbox" name="sp_transfer" value="playlists"> Playlists
                 </label>
 
-                <button type="submit" class="submit-btn">Begin Transfer</button>
+                <button type="submit" class="submit-btn" onclick="submitSelected()">Begin Transfer</button>
             </form>
         </div>
 

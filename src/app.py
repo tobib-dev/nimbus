@@ -1,8 +1,12 @@
-from flask import Flask, render_template, redirect, request, abort, jsonify
+from flask import Flask, render_template, redirect, request, abort, jsonify, session
 import requests
 import sp_auth
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+load_dotenv()
+app.secret_key = os.getenv("SECRET_KEY")
 
 @app.route("/")
 def home():
@@ -20,8 +24,25 @@ def callback_spotify():
     if code == "access_denied":
         abort(404)
     token_info = sp_auth.get_token_info(code)
-    sp_lib = sp_auth.extract(token_info['access_token'])
+    access_token = token_info['access_token']
+    session['spotify'] = access_token
+    sp_lib = sp_auth.extract(access_token)
     return render_template("sp_board.html", library=sp_lib)
+
+@app.route("/sp_transfer", method=["POST"])
+def sp_transfer():
+    data = request.get_json()
+    selected = data.get("selected", [])
+    
+    access_token = session.get("spotify_token")
+    if not access_token:
+        return jsonify({"error": "Missing Spotify token"}), 401
+
+    sp_lib = sp_auth.extract(access_token)
+    selected_lib = {k: v for k, v in sp_lib.items() is k in selected}
+
+    return jsonify(selected_lib), 200
+
 
 @app.route("/apple-token")
 def get_apple_token():
@@ -67,7 +88,7 @@ def get_library_items():
     url = f"https://api.music.apple.com/{endpoint}?offset={offset}&limit=100"
     print(f"Calling Apple Music API at: {url}")
     response = requests.get(url, headers=headers)
-    #print(f"Apple Music API status {response.status_code}, body: {response.json()}")
+    
     return jsonify(response.json())
 
 def get_developer_token():
@@ -78,3 +99,4 @@ def get_developer_token():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    app.secret_ke
