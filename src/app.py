@@ -32,8 +32,8 @@ def get_apple_token():
 @app.route("/playlist-tracks")
 def get_playlist_tracks():
     playlist_id = request.args.get("playlistId")
-    offset = request.args.get("offset", 0)
 
+    offset = request.args.get("offset", 0)
     developer_token = get_developer_token()
     music_user_token = request.headers.get("Music-User-Token")
 
@@ -42,7 +42,7 @@ def get_playlist_tracks():
         "Music-User-Token": music_user_token
     }
 
-    url = f"https://api.music.apple.com/v1/me/library/playlists/{playlist_id}/tracks?offset={offset}"
+    url = f"https://api.music.apple.com/v1/me/library/playlists/{playlist_id}/tracks?offset={offset}&limit=100"
 
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
@@ -52,18 +52,22 @@ def get_playlist_tracks():
 
 @app.route('/library-items')
 def get_library_items():
-    endpoint = request.args.get('endpoint')
+    endpoint = request.args.get('endpoint').split('?')[0]
     offset = request.args.get('offset', 0)
     user_token = request.headers.get('Music-User-Token')
     developer_token = get_developer_token()
+
+    print(f"Received request to fetch {endpoint} with offset {offset} and token {user_token}")
 
     headers = {
         "Authorization": f"Bearer {developer_token}",
         "Music-User-Token": user_token
     }
 
-    url = f"https://api.music.apple.com/{endpoint}&offset={offset}"
+    url = f"https://api.music.apple.com/{endpoint}?offset={offset}&limit=100"
+    print(f"Calling Apple Music API at: {url}")
     response = requests.get(url, headers=headers)
+    #print(f"Apple Music API status {response.status_code}, body: {response.json()}")
     return jsonify(response.json())
 
 def get_developer_token():

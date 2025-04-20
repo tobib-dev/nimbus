@@ -66,6 +66,14 @@ async function getAuthorizedMusicKitInstance() {
 }
 
 async function fetchAllLibraryItems(endpoint, musicUserToken) {
+    console.log("fetchAllLibraryItems called with endpoint:", endpoint);
+
+    console.trace();
+
+    if (!/^v1\/me\/library\/(songs|playlists)$/.test(endpoint)) {
+        throw new Error("Invalid endpoint: " + endpoint);
+    }
+
     let allItems = [];
     let offset = 0;
     let hasMore = true;
