@@ -29,7 +29,7 @@ def callback_spotify():
     sp_lib = sp_auth.extract(access_token)
     return render_template("sp_board.html", library=sp_lib)
 
-@app.route("/sp_transfer", method=["POST"])
+@app.route("/sp_transfer", methods=["POST"])
 def sp_transfer():
     data = request.get_json()
     selected = data.get("selected", [])
