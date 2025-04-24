@@ -3,13 +3,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     const dashboard = document.getElementById("apple-dashboard");
     const homeScreen = document.getElementById("home-screen");
     const backBtn = document.getElementById("back-home");
+    const transferToAppleBtn = document.getElementById("transfer-to-apple-btn");
+    if (transferToAppleBtn) {
+        transferToAppleBtn.addEventListener("click", submitSelected);
+    } else {
+        console.error("Transfer to Apple Button not in DOM");
+    }
 
-    dashboard.style.display = "none";
+    if (dashboard) {
+        dashboard.style.display = "none";
+    }
+    
     appleLoginBtn.addEventListener("click", async () => {
         console.log("Apple music button clicked");
 
         const music = await getAuthorizedMusicKitInstance();
         if (!music) return;
+
         if (music) {
             console.log("MusicKit authorized!");
 
@@ -180,24 +190,65 @@ async function submitSelected() {
         return;
     }
 
-    fetch("/sp_transfer", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({selected: selectedItems})
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+    try {
+        const response = await fetch("/sp_transfer", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({selected: selectedItems})
+        });
+    
+        if (!response.ok) throw new Error(`Transfer from Spotify to Apple Music failed!`);
+        
+        const data = await response.json();
+        const music = await authorizeReceiver();
+        await transferToAppleMusic(music, data.library);
+
+    } catch (err) {
+        console.error("Error transferring to Apple Music:", err);
+        alert("Transfer to Apple Music has failed.");
+    }
+}
+
+async function authorizeReceiver() {
+    if (musicKitInstance) return musicKitInstance;
+
+    const response = await fetch("/apple-token")
+    const data = await response.json();
+
+    MusicKit.configure({
+        developerToken: data.token,
+        app: {
+            name: "Nimbus",
+            build: "1.0.0"
         }
-        return response.json();
-    })
-    .then(data => {
-        alert(`Transfer started for: ${data.selected.join(", ")}`);
-    })
-    .catch(error => {
-        console.error("Transfer error:", error);
-        alert("Something went wrong during the transfer.");
     });
+
+    const music = MusicKit.getInstance();
+    await music.authorize();
+    musicKitInstance = music;
+
+    return music;
+}
+
+async function transferToAppleMusic(music, library) {
+    for (const track of library.tracks || []) {
+        const searchQuery = `${track.name} ${track.artist}`;
+        const searchResults = await music.api.search(searchQuery, {
+            types: ['songs'],
+            limit: 1
+        });
+
+        const song = searchResults?.songs?.data?.[0]
+        if (song) {
+            console.log(`Adding ${track.name} by ${track.artist}`);
+            await music.api.addToLibrary(song.id);
+        } else {
+            console.warn(`No match found for: ${track.name} - ${track.artist}`);
+        }
+
+        alert("Transfer to Apple Music is complete!");
+    }
 }

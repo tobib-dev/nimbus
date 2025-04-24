@@ -34,14 +34,14 @@ def sp_transfer():
     data = request.get_json()
     selected = data.get("selected", [])
     
-    access_token = session.get("spotify_token")
+    access_token = session.get("spotify")
     if not access_token:
         return jsonify({"error": "Missing Spotify token"}), 401
 
     sp_lib = sp_auth.extract(access_token)
-    selected_lib = {k: v for k, v in sp_lib.items() is k in selected}
+    selected_lib = {k: v for k, v in sp_lib.items() if k in selected}
 
-    return jsonify(selected_lib), 200
+    return jsonify({"library": selected_lib})
 
 
 @app.route("/apple-token")

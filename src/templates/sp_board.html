@@ -14,7 +14,7 @@
 
         <div class="transfer-options">
             <h2>Select your transfers:</h2>
-            <form id="sp_form" method="POST">
+            <form id="sp_form">
                 <label class="checkbox-label">
                     <input type="checkbox" name="sp_transfer" value="songs"> Songs
                 </label>
@@ -22,7 +22,7 @@
                     <input type="checkbox" name="sp_transfer" value="playlists"> Playlists
                 </label>
 
-                <button type="submit" class="submit-btn" onclick="submitSelected()">Begin Transfer</button>
+                <button id="transfer-to-apple-btn" type="submit" class="submit-btn" onclick="submitSelected()">Begin Transfer</button>
             </form>
         </div>
 
