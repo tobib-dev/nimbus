@@ -1,54 +1,62 @@
+let musicKitInstance;
+
 document.addEventListener("DOMContentLoaded", async () => {
     const appleLoginBtn = document.getElementById("apple-login");
     const dashboard = document.getElementById("apple-dashboard");
     const homeScreen = document.getElementById("home-screen");
     const backBtn = document.getElementById("back-home");
-    const transferToAppleBtn = document.getElementById("transfer-to-apple-btn");
-    if (transferToAppleBtn) {
-        transferToAppleBtn.addEventListener("click", submitSelected);
-    } else {
-        console.error("Transfer to Apple Button not in DOM");
-    }
-
+    
     if (dashboard) {
         dashboard.style.display = "none";
     }
     
-    appleLoginBtn.addEventListener("click", async () => {
-        console.log("Apple music button clicked");
+    if (appleLoginBtn) {
+        appleLoginBtn.addEventListener("click", async () => {
+            console.log("Apple music button clicked");
+    
+            const music = await getAuthorizedMusicKitInstance();
+            if (!music) return;
+    
+            if (music) {
+                console.log("MusicKit authorized!");
+    
+                const developerToken = music.developerToken;
+                const userToken = music.musicUserToken;
+    
+                homeScreen.style.display = "none";
+                dashboard.style.display = "block";
+                
+                const songs = await fetchAllLibraryItems(
+                    'v1/me/library/songs',
+                    userToken
+                );
+                console.log("Fetched songs:", songs);
+                displaySongs(songs);
+    
+                const playlists = await fetchAllLibraryItems(
+                    'v1/me/library/playlists',
+                    userToken
+                );
+                console.log("Fetched playlists:", playlists);
+                await displayPlaylists(playlists, userToken)
+            }
+        });
+    }
+    const transferToAppleBtn = document.getElementById("transfer-to-apple-btn")
+    
+    if (transferToAppleBtn) {
+        transferToAppleBtn.addEventListener("click", function(event) {
+            event.preventDefault();
+            transferLibrary();
+        });
+    }
 
-        const music = await getAuthorizedMusicKitInstance();
-        if (!music) return;
-
-        if (music) {
-            console.log("MusicKit authorized!");
-
-            const developerToken = music.developerToken;
-            const userToken = music.musicUserToken;
-
-            homeScreen.style.display = "none";
-            dashboard.style.display = "block";
-            
-            const songs = await fetchAllLibraryItems(
-                'v1/me/library/songs',
-                userToken
-            );
-            console.log("Fetched songs:", songs);
-            displaySongs(songs);
-
-            const playlists = await fetchAllLibraryItems(
-                'v1/me/library/playlists',
-                userToken
-            );
-            console.log("Fetched playlists:", playlists);
-            await displayPlaylists(playlists, userToken)
-        }
-    });
-
-    backBtn.addEventListener("click", () => {
-        dashboard.style.display = "none";
-        homeScreen.style.display = "block";
-    })
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            dashboard.style.display = "none";
+            homeScreen.style.display = "block";
+        })    
+    }
 });
 
 async function getAuthorizedMusicKitInstance() {
@@ -57,17 +65,20 @@ async function getAuthorizedMusicKitInstance() {
         const data = await response.json();
         const token = data.token;
 
-        MusicKit.configure({
-            developerToken: token,
-            app: {
-                name: "Nimbus",
-                build: "1.0.0"
-            }
-        });
+        if (!musicKitInstance) {
+            MusicKit.configure({
+                developerToken: token,
+                app: {
+                    name: "Nimbus",
+                    build: "1.0.0"
+                }
+            });
 
-        const music = MusicKit.getInstance();
-        await music.authorize();
-        return music;
+            const music = MusicKit.getInstance();
+            await music.authorize();
+            musicKitInstance = music;
+        }
+        return musicKitInstance;
 
     } catch (error) {
         console.error("Apple Music authentication failed:", error);
@@ -181,15 +192,7 @@ async function displayPlaylists(playlists, UserToken) {
     }
 }
 
-async function submitSelected() {
-    const checkboxes = document.querySelectorAll('input[name="sp_transfer"]:checked');
-    const selectedItems = Array.from(checkboxes).map(cb => cb.value);
-
-    if (selectedItems.length === 0) {
-        alert("Please select at least one item to transfer.");
-        return;
-    }
-
+async function transferLibrary() {
     try {
         const response = await fetch("/sp_transfer", {
             method: "POST",
@@ -197,13 +200,15 @@ async function submitSelected() {
                 "Content-Type": "application/json"
             },
             credentials: "include",
-            body: JSON.stringify({selected: selectedItems})
+            body: JSON.stringify({selected: ["tracks"]})
         });
     
         if (!response.ok) throw new Error(`Transfer from Spotify to Apple Music failed!`);
         
         const data = await response.json();
+        console.log("Library returned from spotify:", data.library);
         const music = await authorizeReceiver();
+        
         await transferToAppleMusic(music, data.library);
 
     } catch (err) {
@@ -234,8 +239,8 @@ async function authorizeReceiver() {
 }
 
 async function transferToAppleMusic(music, library) {
-    for (const track of library.tracks || []) {
-        const searchQuery = `${track.name} ${track.artist}`;
+    for (const track of library || []) {
+        const searchQuery = `${track.title} ${track.artist}`;
         const searchResults = await music.api.search(searchQuery, {
             types: ['songs'],
             limit: 1
@@ -243,10 +248,10 @@ async function transferToAppleMusic(music, library) {
 
         const song = searchResults?.songs?.data?.[0]
         if (song) {
-            console.log(`Adding ${track.name} by ${track.artist}`);
+            console.log(`Adding ${track.title} by ${track.artist}`);
             await music.api.addToLibrary(song.id);
         } else {
-            console.warn(`No match found for: ${track.name} - ${track.artist}`);
+            console.warn(`No match found for: ${track.title} - ${track.artist}`);
         }
 
         alert("Transfer to Apple Music is complete!");

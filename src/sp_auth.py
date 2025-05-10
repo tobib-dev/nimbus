@@ -18,14 +18,24 @@ sp_oauth = SpotifyOAuth(
 # Note the extract function actually took token as an input
 def extract(token):
     sp = spotipy.Spotify(auth=token)
-    saved_albums = sp.current_user_saved_albums()
     saved_tracks = sp.current_user_saved_tracks()
-    playlists = sp.current_user_playlists()
-    return {
-        #"albums": [item["album"]["name"] for item in saved_albums["items"]],
-        "tracks": [item["track"]["name"] for item in saved_tracks["items"]],
-        "playlists": [p["name"] for p in playlists["items"]]
-    }
+
+    library = {}
+    track_list = []
+
+    for item in saved_tracks["items"]:
+        track = item["track"]
+        title = track["name"]
+        artist_names = ", ".join(artist["name"] for artist in track["artists"])
+
+        track_list.append({
+            "title": title,
+            "artist": artist_names
+        })
+    
+    library["tracks"] = track_list
+
+    return library
 
 def get_token_info(auth_code):
     return sp_oauth.get_access_token(auth_code)

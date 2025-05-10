@@ -31,17 +31,12 @@ def callback_spotify():
 
 @app.route("/sp_transfer", methods=["POST"])
 def sp_transfer():
-    data = request.get_json()
-    selected = data.get("selected", [])
-    
     access_token = session.get("spotify")
     if not access_token:
         return jsonify({"error": "Missing Spotify token"}), 401
 
     sp_lib = sp_auth.extract(access_token)
-    selected_lib = {k: v for k, v in sp_lib.items() if k in selected}
-
-    return jsonify({"library": selected_lib})
+    return jsonify({"library": sp_lib})
 
 
 @app.route("/apple-token")

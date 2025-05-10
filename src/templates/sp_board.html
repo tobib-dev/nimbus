@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <script src="/static/app.js" defer></script>
 </head>
 
 <body>
@@ -13,39 +15,36 @@
         <h1 class="title">Welcome to Your Spotify Dashboard</h1>
 
         <div class="transfer-options">
-            <h2>Select your transfers:</h2>
-            <form id="sp_form">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="sp_transfer" value="songs"> Songs
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" name="sp_transfer" value="playlists"> Playlists
-                </label>
 
+            {% if library %}
+                <h2 class="tagline">Your Library</h2>
+                <ul>
+                    {% for key, items in library.items() %}
+                        <div class="library-section">
+                            <h3 class="library-heading">{{ key | capitalize }}</h3>
+                            <ul class="library-items">
+                                {% for item in items %}
+                                    <li>
+                                        {% if item.title and item.artist %}
+                                            {{ item.title }} - <em>{{ item.artist }}</em>
+                                        {% else %}
+                                            {{ item }}
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="text-align:center; margin-top:1rem;">No songs or playlists were found in your spotify library</p>
+            {% endif %}
+
+        <h2>Begin your transfers:</h2>
                 <button id="transfer-to-apple-btn" type="submit" class="submit-btn" onclick="submitSelected()">Begin Transfer</button>
-            </form>
         </div>
-
-        {% if library %}
-            <h2 class="tagline">Your Libraries</h2>
-            <ul>
-                {% for key, value in library.items() %}
-                    <div class="library-section">
-                        <h3 class="library-heading">{{ key | capitalize }}</h3>
-                        <ul class="library-items">
-                            {% for item in value %}
-                                <li>{{ item }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p style="text-align:center; margin-top:1rem;">No songs or playlists were found in your spotify library</p>
-        {% endif %}
         <a href="/" class="back-link">⟵ Back to Home</a>
     </div>
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 
 </html>
