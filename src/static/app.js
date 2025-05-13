@@ -1,4 +1,5 @@
 let musicKitInstance;
+let transferInProgress = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const appleLoginBtn = document.getElementById("apple-login");
@@ -193,6 +194,9 @@ async function displayPlaylists(playlists, UserToken) {
 }
 
 async function transferLibrary() {
+    if (transferInProgress) return;
+    transferInProgress = true;
+
     try {
         const response = await fetch("/sp_transfer", {
             method: "POST",
@@ -209,11 +213,13 @@ async function transferLibrary() {
         console.log("Library returned from spotify:", data.library);
         const music = await authorizeReceiver();
         
-        await transferToAppleMusic(music, data.library);
+        await transferToAppleMusic(music, data.library.tracks);
 
     } catch (err) {
         console.error("Error transferring to Apple Music:", err);
         alert("Transfer to Apple Music has failed.");
+    } finally {
+        transferInProgress = false;
     }
 }
 
@@ -239,6 +245,10 @@ async function authorizeReceiver() {
 }
 
 async function transferToAppleMusic(music, library) {
+    if (!music.isAuthorized) {
+        await music.authorize;
+    }
+
     for (const track of library || []) {
         const searchQuery = `${track.title} ${track.artist}`;
         const searchResults = await music.api.search(searchQuery, {
@@ -247,13 +257,21 @@ async function transferToAppleMusic(music, library) {
         });
 
         const song = searchResults?.songs?.data?.[0]
-        if (song) {
+        if (song && typeof song.id === "string") {
             console.log(`Adding ${track.title} by ${track.artist}`);
-            await music.api.addToLibrary(song.id);
+
+            try {
+                await music.api.library.add({
+                    songs: [[song.id]],
+                });
+            } catch (e) {
+                console.error("Error from MusicKit while transferring:",  e);
+            }
+            
         } else {
             console.warn(`No match found for: ${track.title} - ${track.artist}`);
         }
-
-        alert("Transfer to Apple Music is complete!");
     }
+
+    alert("Transfer to Apple Music is complete!");
 }
