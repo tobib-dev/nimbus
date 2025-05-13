@@ -249,6 +249,8 @@ async function transferToAppleMusic(music, library) {
         await music.authorize;
     }
 
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     for (const track of library || []) {
         const searchQuery = `${track.title} ${track.artist}`;
         const searchResults = await music.api.search(searchQuery, {
@@ -264,6 +266,7 @@ async function transferToAppleMusic(music, library) {
                 await music.api.library.add({
                     songs: [[song.id]],
                 });
+                await delay(1000);
             } catch (e) {
                 console.error("Error from MusicKit while transferring:",  e);
             }
